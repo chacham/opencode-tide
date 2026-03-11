@@ -83,6 +83,20 @@ bun run typecheck
 bun run build
 ```
 
+### Local development
+
+OpenCode (which runs on Bun) can import `.ts` files directly, so no build step is needed during development.
+
+Point the plugin at the source file in your OpenCode config:
+
+```json
+{
+  "plugin": ["file:///path/to/opencode-tide/src/index.ts"]
+}
+```
+
+After any code change, restart OpenCode to pick up the updated source.
+
 ## License
 
 MIT
