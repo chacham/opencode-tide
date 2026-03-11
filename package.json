@@ -1,0 +1,39 @@
+{
+  "name": "opencode-tide",
+  "version": "0.1.0",
+  "description": "Flexible multi-agent orchestration plugin for OpenCode — bring your own models, roles, and prompts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target bun --format esm && tsc --emitDeclarationOnly -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "bun run clean && bun run build",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "keywords": [
+    "opencode",
+    "plugin",
+    "agents",
+    "ai",
+    "llm",
+    "orchestration"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.2.16",
+    "@opencode-ai/sdk": "^1.2.17",
+    "zod": "^4.1.8"
+  },
+  "devDependencies": {
+    "bun-types": "^1.0.0",
+    "typescript": "^5.7.3"
+  }
+}
