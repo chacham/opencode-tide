@@ -48,6 +48,14 @@ describe("AgentConfigSchema", () => {
       expect(AgentConfigSchema.safeParse({ model: "m", mode: "all" }).success).toBe(true)
     })
 
+    test("accepts tools as boolean map", () => {
+      const result = AgentConfigSchema.safeParse({
+        model: "m",
+        tools: { bash: false, webfetch: true, read: true },
+      })
+      expect(result.success).toBe(true)
+    })
+
     test("accepts temperature at boundaries", () => {
       expect(AgentConfigSchema.safeParse({ model: "m", temperature: 0 }).success).toBe(true)
       expect(AgentConfigSchema.safeParse({ model: "m", temperature: 2 }).success).toBe(true)
@@ -72,6 +80,12 @@ describe("AgentConfigSchema", () => {
 
     test("rejects invalid mode value", () => {
       expect(AgentConfigSchema.safeParse({ model: "m", mode: "invalid" }).success).toBe(false)
+    })
+
+    test("rejects tools with non-boolean values", () => {
+      expect(
+        AgentConfigSchema.safeParse({ model: "m", tools: { bash: "allow" } }).success,
+      ).toBe(false)
     })
 
     test("rejects non-positive max_steps", () => {

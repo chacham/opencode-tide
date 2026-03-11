@@ -16,6 +16,7 @@ export function applyAgentsToConfig(tideConfig: TideConfig, opencodeConfig: Conf
       ...(agent.mode !== undefined && { mode: agent.mode }),
       ...(agent.color !== undefined && { color: agent.color }),
       ...(agent.disable !== undefined && { disable: agent.disable }),
+      ...(agent.tools !== undefined && { tools: agent.tools }),
     }
   }
 }

@@ -10,6 +10,7 @@ export const AgentConfigSchema = z.object({
   mode: z.enum(["subagent", "primary", "all"]).optional(),
   color: z.string().optional(),
   disable: z.boolean().optional(),
+  tools: z.record(z.string(), z.boolean()).optional(),
 })
 
 export const TideConfigSchema = z.object({

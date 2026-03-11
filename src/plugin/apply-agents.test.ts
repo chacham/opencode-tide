@@ -72,6 +72,15 @@ describe("applyAgentsToConfig", () => {
       applyAgentsToConfig({ agents: { a: { model: "m", disable: true } } }, cfg)
       expect(cfg.agent?.a?.disable).toBe(true)
     })
+
+    test("maps tools allow/deny map", () => {
+      const cfg: Config = {}
+      applyAgentsToConfig(
+        { agents: { a: { model: "m", tools: { bash: false, webfetch: true } } } },
+        cfg,
+      )
+      expect(cfg.agent?.a?.tools).toEqual({ bash: false, webfetch: true })
+    })
   })
 
   describe("#edge cases", () => {
