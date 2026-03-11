@@ -3,8 +3,13 @@ import { z } from "zod"
 export const AgentConfigSchema = z.object({
   model: z.string(),
   prompt: z.string().optional(),
+  description: z.string().optional(),
   temperature: z.number().min(0).max(2).optional(),
+  top_p: z.number().min(0).max(1).optional(),
   max_steps: z.number().int().positive().optional(),
+  mode: z.enum(["subagent", "primary", "all"]).optional(),
+  color: z.string().optional(),
+  disable: z.boolean().optional(),
 })
 
 export const TideConfigSchema = z.object({

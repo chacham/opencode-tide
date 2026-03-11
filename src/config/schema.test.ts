@@ -18,6 +18,36 @@ describe("AgentConfigSchema", () => {
       expect(result.success).toBe(true)
     })
 
+    test("accepts description", () => {
+      const result = AgentConfigSchema.safeParse({
+        model: "anthropic/claude-opus-4-5",
+        description: "Use for complex reasoning tasks.",
+      })
+      expect(result.success).toBe(true)
+    })
+
+    test("accepts top_p", () => {
+      expect(AgentConfigSchema.safeParse({ model: "m", top_p: 0 }).success).toBe(true)
+      expect(AgentConfigSchema.safeParse({ model: "m", top_p: 1 }).success).toBe(true)
+      expect(AgentConfigSchema.safeParse({ model: "m", top_p: 0.9 }).success).toBe(true)
+    })
+
+    test("accepts color as hex string", () => {
+      const result = AgentConfigSchema.safeParse({ model: "m", color: "#FF5733" })
+      expect(result.success).toBe(true)
+    })
+
+    test("accepts disable flag", () => {
+      const result = AgentConfigSchema.safeParse({ model: "m", disable: true })
+      expect(result.success).toBe(true)
+    })
+
+    test("accepts mode values", () => {
+      expect(AgentConfigSchema.safeParse({ model: "m", mode: "subagent" }).success).toBe(true)
+      expect(AgentConfigSchema.safeParse({ model: "m", mode: "primary" }).success).toBe(true)
+      expect(AgentConfigSchema.safeParse({ model: "m", mode: "all" }).success).toBe(true)
+    })
+
     test("accepts temperature at boundaries", () => {
       expect(AgentConfigSchema.safeParse({ model: "m", temperature: 0 }).success).toBe(true)
       expect(AgentConfigSchema.safeParse({ model: "m", temperature: 2 }).success).toBe(true)
@@ -33,6 +63,15 @@ describe("AgentConfigSchema", () => {
     test("rejects temperature out of range", () => {
       expect(AgentConfigSchema.safeParse({ model: "m", temperature: -0.1 }).success).toBe(false)
       expect(AgentConfigSchema.safeParse({ model: "m", temperature: 2.1 }).success).toBe(false)
+    })
+
+    test("rejects top_p out of range", () => {
+      expect(AgentConfigSchema.safeParse({ model: "m", top_p: -0.1 }).success).toBe(false)
+      expect(AgentConfigSchema.safeParse({ model: "m", top_p: 1.1 }).success).toBe(false)
+    })
+
+    test("rejects invalid mode value", () => {
+      expect(AgentConfigSchema.safeParse({ model: "m", mode: "invalid" }).success).toBe(false)
     })
 
     test("rejects non-positive max_steps", () => {

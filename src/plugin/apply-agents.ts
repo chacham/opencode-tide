@@ -9,8 +9,13 @@ export function applyAgentsToConfig(tideConfig: TideConfig, opencodeConfig: Conf
     opencodeConfig.agent[name] = {
       model: agent.model,
       ...(agent.prompt !== undefined && { prompt: agent.prompt }),
+      ...(agent.description !== undefined && { description: agent.description }),
       ...(agent.temperature !== undefined && { temperature: agent.temperature }),
+      ...(agent.top_p !== undefined && { top_p: agent.top_p }),
       ...(agent.max_steps !== undefined && { maxSteps: agent.max_steps }),
+      ...(agent.mode !== undefined && { mode: agent.mode }),
+      ...(agent.color !== undefined && { color: agent.color }),
+      ...(agent.disable !== undefined && { disable: agent.disable }),
     }
   }
 }
