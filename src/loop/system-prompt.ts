@@ -1,3 +1,4 @@
+import type { Model } from "@opencode-ai/sdk"
 import type { LoopState } from "./loop-state"
 
 /**
@@ -23,7 +24,7 @@ export function buildLoopSystemPrompt(loopState: LoopState, sessionID: string): 
 
 type SystemTransformInput = {
   sessionID?: string
-  model: string
+  model: Model
 }
 
 type SystemTransformOutput = {

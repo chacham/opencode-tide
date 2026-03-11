@@ -63,7 +63,7 @@ describe("createSystemTransformHook", () => {
     const hook = createSystemTransformHook(loopState)
 
     const output = { system: ["You are a helpful assistant."] }
-    await hook({ sessionID: "session-abc", model: "claude-opus-4-5" }, output)
+    await hook({ sessionID: "session-abc", model: "claude-opus-4-5" as never }, output)
 
     expect(output.system.length).toBe(2)
     expect(output.system[1]).toContain("tide_loop_complete")
@@ -74,7 +74,7 @@ describe("createSystemTransformHook", () => {
     const hook = createSystemTransformHook(loopState)
 
     const output = { system: ["You are a helpful assistant."] }
-    await hook({ sessionID: "session-xyz", model: "claude-opus-4-5" }, output)
+    await hook({ sessionID: "session-xyz", model: "claude-opus-4-5" as never }, output)
 
     expect(output.system.length).toBe(1)
   })
@@ -86,7 +86,7 @@ describe("createSystemTransformHook", () => {
     const hook = createSystemTransformHook(loopState)
 
     const output = { system: ["base prompt"] }
-    await hook({ sessionID: "session-done", model: "claude-opus-4-5" }, output)
+    await hook({ sessionID: "session-done", model: "claude-opus-4-5" as never }, output)
 
     expect(output.system.length).toBe(1)
   })
@@ -96,7 +96,7 @@ describe("createSystemTransformHook", () => {
     const hook = createSystemTransformHook(loopState)
 
     const output = { system: ["base prompt"] }
-    await hook({ model: "claude-opus-4-5" }, output)
+    await hook({ model: "claude-opus-4-5" as never }, output)
 
     expect(output.system.length).toBe(1)
   })
@@ -107,7 +107,7 @@ describe("createSystemTransformHook", () => {
     const hook = createSystemTransformHook(loopState)
 
     const output: { system: string[] } = { system: [] }
-    await hook({ sessionID: "session-empty", model: "gpt-4o" }, output)
+    await hook({ sessionID: "session-empty", model: "gpt-4o" as never }, output)
 
     expect(output.system.length).toBe(1)
     expect(output.system[0]).toContain("tide_loop_complete")

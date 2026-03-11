@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test"
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test"
 import { mkdirSync, rmSync, writeFileSync } from "fs"
 import { join } from "path"
-import type { Config } from "@opencode-ai/sdk"
+import type { Config, Event } from "@opencode-ai/sdk"
 import type { PluginInput } from "@opencode-ai/plugin"
 
 const TMP = join(import.meta.dir, "__tmp__plugin__")
@@ -11,8 +11,14 @@ function writeConfig(content: string) {
   writeFileSync(join(OPENCODE_DIR, "tide.json"), content, "utf-8")
 }
 
-function makeCtx(dir: string): PluginInput {
-  return { directory: dir } as unknown as PluginInput
+function makeClient(promptAsync = mock(async () => {})) {
+  return {
+    session: { promptAsync },
+  }
+}
+
+function makeCtx(dir: string, client = makeClient()): PluginInput {
+  return { directory: dir, client } as unknown as PluginInput
 }
 
 beforeEach(() => {
@@ -72,6 +78,61 @@ describe("TidePlugin", () => {
 
       expect(cfg.agent?.build?.model).toBe("existing")
       expect(cfg.agent?.tide?.model).toBe("gemini-pro")
+    })
+  })
+
+  describe("#event hook", () => {
+    test("registers event hook", async () => {
+      const { default: TidePlugin } = await import("./index")
+      const hooks = await TidePlugin(makeCtx(TMP))
+      expect(typeof hooks.event).toBe("function")
+    })
+
+    test("event hook does nothing for non-idle events", async () => {
+      const promptAsync = mock(async () => {})
+      const { default: TidePlugin } = await import("./index")
+      const hooks = await TidePlugin(makeCtx(TMP, makeClient(promptAsync)))
+      const event = { type: "session.started", properties: { sessionID: "s1" } } as unknown as Event
+      await hooks.event!({ event })
+      expect(promptAsync).not.toHaveBeenCalled()
+    })
+
+    test("event hook does nothing for session.idle when session not in loop", async () => {
+      const promptAsync = mock(async () => {})
+      const { default: TidePlugin } = await import("./index")
+      const hooks = await TidePlugin(makeCtx(TMP, makeClient(promptAsync)))
+      const event = { type: "session.idle", properties: { sessionID: "s-not-tracked" } } as unknown as Event
+      await hooks.event!({ event })
+      expect(promptAsync).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("#tool hook", () => {
+    test("registers tool hook with tide_loop_complete and tide_loop_status", async () => {
+      const { default: TidePlugin } = await import("./index")
+      const hooks = await TidePlugin(makeCtx(TMP))
+      expect(hooks.tool).toBeDefined()
+      expect(hooks.tool).toHaveProperty("tide_loop_complete")
+      expect(hooks.tool).toHaveProperty("tide_loop_status")
+    })
+  })
+
+  describe("#experimental.chat.system.transform hook", () => {
+    test("registers experimental.chat.system.transform hook", async () => {
+      const { default: TidePlugin } = await import("./index")
+      const hooks = await TidePlugin(makeCtx(TMP))
+      expect(typeof hooks["experimental.chat.system.transform"]).toBe("function")
+    })
+
+    test("transform hook does not modify system for untracked session", async () => {
+      const { default: TidePlugin } = await import("./index")
+      const hooks = await TidePlugin(makeCtx(TMP))
+      const output = { system: ["base"] }
+      await hooks["experimental.chat.system.transform"]!(
+        { sessionID: "unknown-session", model: "claude-opus-4-5" as never },
+        output,
+      )
+      expect(output.system.length).toBe(1)
     })
   })
 })
