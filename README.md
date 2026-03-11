@@ -8,7 +8,7 @@ Bring your own models, roles, and prompts — no auto-selection, no magic defaul
 - Registers named agents into OpenCode via `.opencode/tide.jsonc`
 - Each agent gets an explicit model, optional system prompt, temperature, and step limit
 - Agents not listed in config are simply not registered — nothing happens implicitly
-- Designed to support orchestrator-driven parallel loops (in progress)
+- Orchestrator-driven loop via `session.idle` events — agents control iteration with `tide_loop_complete` / `tide_loop_status`
 
 ## Installation
 
@@ -35,17 +35,17 @@ Create `.opencode/tide.jsonc` in your project root:
 
   "agents": {
     "main": {
-      "model": "claude-opus-4-5",
+      "model": "anthropic/claude-opus-4-5",
       "prompt": "You are the orchestrator. Plan tasks and delegate to workers.",
       "temperature": 0.5
     },
     "worker": {
-      "model": "gpt-4o",
+      "model": "openai/gpt-4o",
       "temperature": 0.3,
       "max_steps": 30
     },
     "researcher": {
-      "model": "gemini-2.0-flash"
+      "model": "google/gemini-2.0-flash"
     }
   },
 
@@ -59,7 +59,7 @@ Create `.opencode/tide.jsonc` in your project root:
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `model` | `string` | yes | Model ID as recognized by OpenCode (e.g. `claude-opus-4-5`, `gpt-4o`) |
+| `model` | `string` | yes | Model in `provider/model` format (e.g. `anthropic/claude-opus-4-5`, `openai/gpt-4o`) |
 | `prompt` | `string` | no | System prompt for the agent |
 | `temperature` | `number` 0–2 | no | Sampling temperature |
 | `max_steps` | `integer` > 0 | no | Max agentic iterations before forcing a text-only response |
