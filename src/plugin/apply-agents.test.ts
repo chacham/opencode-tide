@@ -142,4 +142,75 @@ describe("applyAgentsToConfig", () => {
       expect(cfg.agent?.researcher?.disable).toBe(true)
     })
   })
+
+  describe("#base agent inheritance", () => {
+    test("agent inherits base fields", () => {
+      const cfg: Config = {}
+      applyAgentsToConfig(
+        {
+          base: { temperature: 0.3, mode: "subagent" },
+          agents: { worker: { model: "openai/gpt-4o" } },
+        },
+        cfg,
+      )
+      expect(cfg.agent?.worker?.temperature).toBe(0.3)
+      expect(cfg.agent?.worker?.mode).toBe("subagent")
+    })
+
+    test("agent fields override base fields", () => {
+      const cfg: Config = {}
+      applyAgentsToConfig(
+        {
+          base: { temperature: 0.3, mode: "subagent" },
+          agents: { worker: { model: "openai/gpt-4o", temperature: 0.9, mode: "primary" } },
+        },
+        cfg,
+      )
+      expect(cfg.agent?.worker?.temperature).toBe(0.9)
+      expect(cfg.agent?.worker?.mode).toBe("primary")
+    })
+
+    test("base model is used when agent has no model", () => {
+      const cfg: Config = {}
+      applyAgentsToConfig(
+        {
+          base: { model: "anthropic/claude-haiku-3-5", temperature: 0.5 },
+          agents: { worker: {} },
+        },
+        cfg,
+      )
+      expect(cfg.agent?.worker?.model).toBe("anthropic/claude-haiku-3-5")
+      expect(cfg.agent?.worker?.temperature).toBe(0.5)
+    })
+
+    test("agent model overrides base model", () => {
+      const cfg: Config = {}
+      applyAgentsToConfig(
+        {
+          base: { model: "anthropic/claude-haiku-3-5" },
+          agents: { worker: { model: "openai/gpt-4o" } },
+        },
+        cfg,
+      )
+      expect(cfg.agent?.worker?.model).toBe("openai/gpt-4o")
+    })
+
+    test("skips agent when neither agent nor base has a model", () => {
+      const cfg: Config = {}
+      applyAgentsToConfig(
+        {
+          base: { temperature: 0.5 },
+          agents: { worker: {} },
+        },
+        cfg,
+      )
+      expect(cfg.agent?.worker).toBeUndefined()
+    })
+
+    test("agents without base still require model", () => {
+      const cfg: Config = {}
+      applyAgentsToConfig({ agents: { worker: { model: "openai/gpt-4o" } } }, cfg)
+      expect(cfg.agent?.worker?.model).toBe("openai/gpt-4o")
+    })
+  })
 })

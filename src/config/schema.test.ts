@@ -156,12 +156,28 @@ describe("TideConfigSchema", () => {
       const result = TideConfigSchema.safeParse({ $schema: "./tide.schema.json" })
       expect(result.success).toBe(true)
     })
+
+    test("accepts base config without model", () => {
+      const result = TideConfigSchema.safeParse({
+        base: { temperature: 0.5, mode: "subagent" },
+        agents: { worker: { model: "openai/gpt-4o" } },
+      })
+      expect(result.success).toBe(true)
+    })
+
+    test("accepts base config with model", () => {
+      const result = TideConfigSchema.safeParse({
+        base: { model: "anthropic/claude-haiku-3-5", temperature: 0.3 },
+        agents: { worker: {} },
+      })
+      expect(result.success).toBe(true)
+    })
   })
 
   describe("#when invalid", () => {
     test("rejects invalid agent config inside agents map", () => {
       const result = TideConfigSchema.safeParse({
-        agents: { bad: { temperature: 0.5 } },
+        agents: { bad: { model: "m", temperature: 5.0 } },
       })
       expect(result.success).toBe(false)
     })

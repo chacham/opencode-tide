@@ -80,10 +80,10 @@ describe("loadConfig", () => {
 
   describe("#when config fails schema validation", () => {
     test("throws ConfigLoadError with field info", async () => {
-      writeConfig("tide.json", JSON.stringify({ agents: { bad: { temperature: 0.5 } } }))
+      writeConfig("tide.json", JSON.stringify({ agents: { bad: { model: "m", temperature: 5.0 } } }))
       const err = await loadConfig(TMP).catch((e) => e)
       expect(err).toBeInstanceOf(ConfigLoadError)
-      expect(err.message).toContain("model")
+      expect(err.message).toContain("temperature")
     })
   })
 })
