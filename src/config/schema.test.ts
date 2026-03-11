@@ -56,6 +56,30 @@ describe("AgentConfigSchema", () => {
       expect(result.success).toBe(true)
     })
 
+    test("accepts permission with simple values", () => {
+      const result = AgentConfigSchema.safeParse({
+        model: "m",
+        permission: { edit: "allow", webfetch: "deny", doom_loop: "ask" },
+      })
+      expect(result.success).toBe(true)
+    })
+
+    test("accepts permission.bash as string", () => {
+      const result = AgentConfigSchema.safeParse({
+        model: "m",
+        permission: { bash: "allow" },
+      })
+      expect(result.success).toBe(true)
+    })
+
+    test("accepts permission.bash as per-command map", () => {
+      const result = AgentConfigSchema.safeParse({
+        model: "m",
+        permission: { bash: { "git commit": "allow", "rm -rf": "deny" } },
+      })
+      expect(result.success).toBe(true)
+    })
+
     test("accepts temperature at boundaries", () => {
       expect(AgentConfigSchema.safeParse({ model: "m", temperature: 0 }).success).toBe(true)
       expect(AgentConfigSchema.safeParse({ model: "m", temperature: 2 }).success).toBe(true)
@@ -85,6 +109,12 @@ describe("AgentConfigSchema", () => {
     test("rejects tools with non-boolean values", () => {
       expect(
         AgentConfigSchema.safeParse({ model: "m", tools: { bash: "allow" } }).success,
+      ).toBe(false)
+    })
+
+    test("rejects permission with invalid action value", () => {
+      expect(
+        AgentConfigSchema.safeParse({ model: "m", permission: { edit: "yes" } }).success,
       ).toBe(false)
     })
 

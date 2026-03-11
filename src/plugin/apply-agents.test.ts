@@ -81,6 +81,35 @@ describe("applyAgentsToConfig", () => {
       )
       expect(cfg.agent?.a?.tools).toEqual({ bash: false, webfetch: true })
     })
+
+    test("maps permission", () => {
+      const cfg: Config = {}
+      applyAgentsToConfig(
+        {
+          agents: {
+            a: {
+              model: "m",
+              permission: { edit: "allow", bash: "ask", webfetch: "deny" },
+            },
+          },
+        },
+        cfg,
+      )
+      expect(cfg.agent?.a?.permission).toEqual({ edit: "allow", bash: "ask", webfetch: "deny" })
+    })
+
+    test("maps permission.bash as per-command map", () => {
+      const cfg: Config = {}
+      applyAgentsToConfig(
+        {
+          agents: {
+            a: { model: "m", permission: { bash: { "git commit": "allow", "rm -rf": "deny" } } },
+          },
+        },
+        cfg,
+      )
+      expect(cfg.agent?.a?.permission?.bash).toEqual({ "git commit": "allow", "rm -rf": "deny" })
+    })
   })
 
   describe("#edge cases", () => {

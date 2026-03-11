@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+const PermissionAction = z.enum(["ask", "allow", "deny"])
+
 export const AgentConfigSchema = z.object({
   model: z.string(),
   prompt: z.string().optional(),
@@ -11,6 +13,15 @@ export const AgentConfigSchema = z.object({
   color: z.string().optional(),
   disable: z.boolean().optional(),
   tools: z.record(z.string(), z.boolean()).optional(),
+  permission: z
+    .object({
+      edit: PermissionAction.optional(),
+      bash: z.union([PermissionAction, z.record(z.string(), PermissionAction)]).optional(),
+      webfetch: PermissionAction.optional(),
+      doom_loop: PermissionAction.optional(),
+      external_directory: PermissionAction.optional(),
+    })
+    .optional(),
 })
 
 export const TideConfigSchema = z.object({
