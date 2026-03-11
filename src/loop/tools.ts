@@ -2,6 +2,16 @@ import { tool } from "@opencode-ai/plugin"
 import type { LoopState } from "./loop-state"
 
 export function createLoopTools(loopState: LoopState): Record<string, ReturnType<typeof tool>> {
+  const tide_loop_start = tool({
+    description:
+      "Start the Tide orchestration loop for this session. Call this to begin an iterative multi-step workflow. The loop will continue until you call tide_loop_complete or the max iteration limit is reached.",
+    args: {},
+    execute: async (_args, context) => {
+      loopState.activate(context.sessionID)
+      return `Loop started. Max iterations: ${loopState.maxIterations}. Call tide_loop_complete when all tasks are done.`
+    },
+  })
+
   const tide_loop_status = tool({
     description:
       "Check the current Tide orchestration loop state: iteration number, max iterations, and completion status.",
@@ -25,5 +35,5 @@ export function createLoopTools(loopState: LoopState): Record<string, ReturnType
     },
   })
 
-  return { tide_loop_status, tide_loop_complete }
+  return { tide_loop_start, tide_loop_status, tide_loop_complete }
 }

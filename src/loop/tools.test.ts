@@ -14,11 +14,47 @@ const makeContext = (sessionID: string) => ({
 })
 
 describe("createLoopTools", () => {
-  it("returns an object with tide_loop_complete and tide_loop_status", () => {
+  it("returns an object with tide_loop_start, tide_loop_complete and tide_loop_status", () => {
     const loopState = new LoopState({})
     const tools = createLoopTools(loopState)
+    expect(tools).toHaveProperty("tide_loop_start")
     expect(tools).toHaveProperty("tide_loop_complete")
     expect(tools).toHaveProperty("tide_loop_status")
+  })
+
+  describe("tide_loop_start", () => {
+    it("activates the loop for the session", async () => {
+      const loopState = new LoopState({})
+      const tools = createLoopTools(loopState)
+      await tools.tide_loop_start.execute({}, makeContext("session-start-1"))
+      expect(loopState.getSession("session-start-1")).toBeDefined()
+      expect(loopState.getSession("session-start-1")?.status).toBe("active")
+    })
+
+    it("returns a confirmation message", async () => {
+      const loopState = new LoopState({})
+      const tools = createLoopTools(loopState)
+      const result = await tools.tide_loop_start.execute({}, makeContext("session-start-2"))
+      expect(typeof result).toBe("string")
+      expect(result.length).toBeGreaterThan(0)
+    })
+
+    it("makes shouldContinue return true after activation", async () => {
+      const loopState = new LoopState({})
+      const tools = createLoopTools(loopState)
+      await tools.tide_loop_start.execute({}, makeContext("session-start-3"))
+      expect(loopState.shouldContinue("session-start-3")).toBe(true)
+    })
+
+    it("resets iteration to 0 if loop is restarted", async () => {
+      const loopState = new LoopState({})
+      loopState.activate("session-start-4")
+      loopState.increment("session-start-4")
+      loopState.increment("session-start-4")
+      const tools = createLoopTools(loopState)
+      await tools.tide_loop_start.execute({}, makeContext("session-start-4"))
+      expect(loopState.getSession("session-start-4")?.iteration).toBe(0)
+    })
   })
 
   describe("tide_loop_status", () => {
