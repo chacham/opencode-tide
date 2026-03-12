@@ -1,6 +1,7 @@
 import { tool } from "@opencode-ai/plugin"
 import type { OpencodeClient } from "@opencode-ai/sdk"
 import type { LoopState } from "./loop-state"
+import { runDelegate } from "./delegate"
 
 type CreateLoopToolsInput = {
   loopState: LoopState
@@ -46,32 +47,18 @@ export function createLoopTools({
 
   const tide_delegate = tool({
     description:
-      "Delegate a task to another agent. The specified agent will run as a subtask inside this session and execute the given prompt. Use this to hand off specialized work to worker agents.",
+      "Delegate a task to another agent. The specified agent will run in a child session and execute the given prompt. Blocks until the agent completes and returns its response.",
     args: {
       agent: tool.schema.string("Name of the agent to delegate to, as defined in tide.jsonc"),
-      description: tool.schema.string("Short description of the task being delegated"),
       prompt: tool.schema.string("Full instructions for the agent to execute"),
     },
     execute: async (args, context) => {
-      try {
-        await client.session.promptAsync({
-          path: { id: context.sessionID },
-          body: {
-            parts: [
-              {
-                type: "subtask",
-                agent: args.agent,
-                description: args.description,
-                prompt: args.prompt,
-              },
-            ],
-          },
-        })
-        return `Delegated to agent "${args.agent}": ${args.description}`
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
-        return `Failed to delegate to agent "${args.agent}": ${message}`
-      }
+      return runDelegate({
+        client,
+        sessionID: context.sessionID,
+        agent: args.agent,
+        prompt: args.prompt,
+      })
     },
   })
 

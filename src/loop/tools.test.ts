@@ -17,7 +17,12 @@ const makeContext = (sessionID: string) => ({
 const makeClient = (promptAsyncMock = mock(async () => {})) =>
   ({
     session: {
+      create: mock(async () => ({ data: { id: "child-session-1" } })),
       promptAsync: promptAsyncMock,
+      status: mock(async (opts: { path: { id: string } }) => ({ data: { [opts.path.id]: { type: "idle" } } })),
+      messages: mock(async () => ({
+        data: [{ info: { role: "assistant" }, parts: [{ type: "text", text: "done" }] }],
+      })),
     },
   }) as unknown as OpencodeClient
 
@@ -134,63 +139,73 @@ describe("createLoopTools", () => {
   })
 
   describe("tide_delegate", () => {
-    it("calls promptAsync with a subtask part", async () => {
-      const promptAsync = mock(async () => {})
-      const tools = createLoopTools({ loopState: new LoopState({}), client: makeClient(promptAsync) })
-      await tools.tide_delegate.execute(
-        { agent: "worker", description: "Build auth module", prompt: "Implement JWT auth in src/auth/index.ts" },
-        makeContext("session-delegate-1"),
-      )
-      expect(promptAsync).toHaveBeenCalledTimes(1)
-      const call = (promptAsync.mock.calls as unknown as Array<[{ path: { id: string }; body: { parts: Array<{ type: string; agent: string; description: string; prompt: string }> } }]>)[0]![0]
-      expect(call.path.id).toBe("session-delegate-1")
-      expect(call.body.parts[0].type).toBe("subtask")
-      expect(call.body.parts[0].agent).toBe("worker")
-      expect(call.body.parts[0].description).toBe("Build auth module")
-      expect(call.body.parts[0].prompt).toBe("Implement JWT auth in src/auth/index.ts")
-    })
-
-    it("returns a confirmation message with the agent name", async () => {
+    it("returns the result from the delegated agent", async () => {
       const tools = createLoopTools({ loopState: new LoopState({}), client: makeClient() })
       const result = await tools.tide_delegate.execute(
-        { agent: "worker", description: "Build auth module", prompt: "Implement JWT auth" },
-        makeContext("session-delegate-2"),
+        { agent: "worker", prompt: "Implement JWT auth in src/auth/index.ts" },
+        makeContext("session-delegate-1"),
       )
       expect(typeof result).toBe("string")
-      expect(result).toContain("worker")
+      expect(result.length).toBeGreaterThan(0)
     })
 
-    it("passes description and prompt correctly to the subtask part", async () => {
+    it("passes the prompt to the child session", async () => {
       const promptAsync = mock(async () => {})
-      const tools = createLoopTools({ loopState: new LoopState({}), client: makeClient(promptAsync) })
+      const client: OpencodeClient = {
+        session: {
+          create: mock(async () => ({ data: { id: "child-1" } })),
+          promptAsync,
+          status: mock(async (opts: { path: { id: string } }) => ({ data: { [opts.path.id]: { type: "idle" } } })),
+          messages: mock(async () => ({
+            data: [{ info: { role: "assistant" }, parts: [{ type: "text", text: "done" }] }],
+          })),
+        },
+      } as unknown as OpencodeClient
+      const tools = createLoopTools({ loopState: new LoopState({}), client })
       await tools.tide_delegate.execute(
-        { agent: "researcher", description: "Research topic", prompt: "Find all papers on X" },
+        { agent: "worker", prompt: "do the thing" },
+        makeContext("session-delegate-2"),
+      )
+      const call = (promptAsync.mock.calls as unknown as Array<[{ body: { agent: string; parts: Array<{ text: string }> } }]>)[0]![0]
+      expect(call.body.agent).toBe("worker")
+      expect(call.body.parts[0]!.text).toBe("do the thing")
+    })
+
+    it("returns error message when delegate fails", async () => {
+      const create = mock(async () => { throw new Error("create failed") })
+      const client: OpencodeClient = {
+        session: {
+          create,
+          promptAsync: mock(async () => {}),
+          status: mock(async () => ({ data: {} })),
+          messages: mock(async () => ({ data: [] })),
+        },
+      } as unknown as OpencodeClient
+      const tools = createLoopTools({ loopState: new LoopState({}), client })
+      const result = await tools.tide_delegate.execute(
+        { agent: "worker", prompt: "do something" },
         makeContext("session-delegate-3"),
       )
-      const part = (promptAsync.mock.calls as unknown as Array<[{ body: { parts: Array<{ description: string; prompt: string }> } }]>)[0]![0].body.parts[0]!
-      expect(part.description).toBe("Research topic")
-      expect(part.prompt).toBe("Find all papers on X")
+      expect(result).toContain("create failed")
     })
 
-    it("does not throw when promptAsync rejects", async () => {
-      const promptAsync = mock(async () => { throw new Error("network error") })
-      const tools = createLoopTools({ loopState: new LoopState({}), client: makeClient(promptAsync) })
+    it("does not throw when delegation fails", async () => {
+      const create = mock(async () => { throw new Error("network error") })
+      const client: OpencodeClient = {
+        session: {
+          create,
+          promptAsync: mock(async () => {}),
+          status: mock(async () => ({ data: {} })),
+          messages: mock(async () => ({ data: [] })),
+        },
+      } as unknown as OpencodeClient
+      const tools = createLoopTools({ loopState: new LoopState({}), client })
       await expect(
         tools.tide_delegate.execute(
-          { agent: "worker", description: "task", prompt: "do something" },
+          { agent: "worker", prompt: "do something" },
           makeContext("session-delegate-4"),
         ),
       ).resolves.toBeDefined()
-    })
-
-    it("returns error message when promptAsync rejects", async () => {
-      const promptAsync = mock(async () => { throw new Error("network error") })
-      const tools = createLoopTools({ loopState: new LoopState({}), client: makeClient(promptAsync) })
-      const result = await tools.tide_delegate.execute(
-        { agent: "worker", description: "task", prompt: "do something" },
-        makeContext("session-delegate-5"),
-      )
-      expect(result).toContain("network error")
     })
   })
 })
