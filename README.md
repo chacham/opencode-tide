@@ -31,26 +31,53 @@ Create `.opencode/tide.jsonc` in your project root:
 ```jsonc
 {
   // Name of the agent that acts as the orchestrator
-  "orchestrator": "main",
+  "orchestrator": "orchestrator",
+
+  "base": {
+    // Shared defaults — inherited by all agents
+    "temperature": 0.3,
+    "max_steps": 40,
+    "permission": {
+      "bash": "ask",
+      "edit": "allow"
+    }
+  },
 
   "agents": {
-    "main": {
-      "model": "anthropic/claude-opus-4-5",
-      "prompt": "You are the orchestrator. Plan tasks and delegate to workers.",
+    // Plans tasks, delegates to sub-agents, synthesizes the final result
+    "orchestrator": {
+      "model": "github-copilot/gpt-4.1",
+      "prompt": "You are a senior engineering orchestrator. Break down the user's request into concrete sub-tasks, delegate implementation to 'coder', quick tasks to 'runner', and review to 'reviewer' using tide_delegate, then synthesize the final result. Call tide_loop_complete when all tasks are done.",
       "temperature": 0.5
     },
-    "worker": {
-      "model": "openai/gpt-4o",
-      "temperature": 0.3,
-      "max_steps": 30
+
+    // Implements features, writes and edits code files
+    "coder": {
+      "model": "opencode/minimax-m2.5-free",
+      "prompt": "You are a focused software engineer. Implement exactly what you are asked — no scope creep. Write clean, idiomatic code. When done, summarize what you changed.",
+      "max_steps": 60
     },
-    "researcher": {
-      "model": "google/gemini-2.0-flash"
+
+    // Lightweight task runner for simple, well-defined sub-tasks
+    "runner": {
+      "model": "github-copilot/gpt-5-mini",
+      "prompt": "You are an efficient task runner. Execute well-scoped, clearly defined tasks quickly. Focus on the exact request — no extra context, no explanations unless asked.",
+      "max_steps": 20
+    },
+
+    // Reviews code and plans with chain-of-thought reasoning
+    "reviewer": {
+      "model": "opencode/big-pickle",
+      "prompt": "You are a senior code reviewer with strong reasoning skills. Carefully analyze the provided code or plan for correctness, edge cases, security issues, and design flaws. Give concise, actionable feedback. Do not make edits.",
+      "tools": {
+        "edit_file": false,
+        "bash": false
+      }
     }
   },
 
   "loop": {
-    "max_iterations": 20
+    "max_iterations": 15
   }
 }
 ```
