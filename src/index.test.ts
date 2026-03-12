@@ -6,6 +6,7 @@ import type { PluginInput } from "@opencode-ai/plugin"
 
 const TMP = join(import.meta.dir, "__tmp__plugin__")
 const OPENCODE_DIR = join(TMP, ".opencode")
+const USER_CONFIG_DIR = join(TMP, "user-config")
 
 function writeConfig(content: string) {
   writeFileSync(join(OPENCODE_DIR, "tide.json"), content, "utf-8")
@@ -23,10 +24,13 @@ function makeCtx(dir: string, client = makeClient()): PluginInput {
 
 beforeEach(() => {
   mkdirSync(OPENCODE_DIR, { recursive: true })
+  mkdirSync(USER_CONFIG_DIR, { recursive: true })
+  process.env.OPENCODE_CONFIG_DIR = USER_CONFIG_DIR
 })
 
 afterEach(() => {
   rmSync(TMP, { recursive: true, force: true })
+  delete process.env.OPENCODE_CONFIG_DIR
 })
 
 describe("TidePlugin", () => {
