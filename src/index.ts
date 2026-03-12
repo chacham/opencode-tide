@@ -19,7 +19,7 @@ const TidePlugin: Plugin = async (ctx) => {
       await handleSessionEvent({ event, loopState, client: ctx.client })
     },
 
-    tool: createLoopTools(loopState),
+    tool: createLoopTools({ loopState, client: ctx.client }),
 
     "experimental.chat.system.transform": createSystemTransformHook(loopState),
   }
